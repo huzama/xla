@@ -16,7 +16,7 @@ from benchmark_experiment import BenchmarkExperiment
 logger = logging.getLogger(__name__)
 
 
-def parse_none_str(a: str):
+def parse_none_str(a):
   if isinstance(a, str) and a.upper() == "None".upper():
     return None
   return a
