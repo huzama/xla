@@ -12,7 +12,7 @@ import torch
 from torch.profile import profile
 import torch._dynamo.utils as dynamo_utils
 import tiers
-from typing import Optional
+from typing import Optional, Any
 import torch_xla.debug.metrics as met
 from tqdm import tqdm
 from enum import Enum
@@ -210,8 +210,8 @@ class ExperimentRunner:
     print(stdout_text, file=sys.stdout, end='', flush=True)
     print(stderr_text, file=sys.stderr, end='', flush=True)
 
-  def _default_iter_fn(self, benchmark_experiment: BenchmarkExperiment, benchmark_model: BenchmarkModel,
-                       input_tensor):
+  def _default_iter_fn(self, benchmark_experiment: BenchmarkExperiment,
+                       benchmark_model: BenchmarkModel, input_tensor):
     tracing_time = None
     total_time_start = time.perf_counter()
     # Invoke iteration function and measure tracing time w/o waiting on the
@@ -228,8 +228,8 @@ class ExperimentRunner:
     total_time = time.perf_counter() - total_time_start
     return output, total_time, tracing_time
 
-  def _pure_wall_time_iter_fn(self, benchmark_experiment: BenchmarkExperiment, benchmark_model: BenchmarkModel,
-                              input_tensor):
+  def _pure_wall_time_iter_fn(self, benchmark_experiment: BenchmarkExperiment,
+                              benchmark_model: BenchmarkModel, input_tensor):
     device = xm.xla_device() if benchmark_experiment.xla else 'cuda'
     sync_fn = xm.wait_device_ops if benchmark_experiment.xla else torch.cuda.synchronize
     timing, output = bench.do_bench(
@@ -276,8 +276,11 @@ class ExperimentRunner:
                        benchmark_model.to_dict(), accumulated_metrics,
                        verify_res)
 
-  def run_once_and_gather_metrics(self, benchmark_experiment: BenchmarkExperiment, benchmark_model: BenchmarkModel,
-                                  experiment_config: OrderedDict, model_config: OrderedDict,
+  def run_once_and_gather_metrics(self,
+                                  benchmark_experiment: BenchmarkExperiment,
+                                  benchmark_model: BenchmarkModel,
+                                  experiment_config: OrderedDict,
+                                  model_config: OrderedDict,
                                   repeat_iteration: int):
 
     # Prepare inputs.
@@ -301,7 +304,8 @@ class ExperimentRunner:
     if benchmark_experiment.xla:
       t_trace = 0
 
-    def loop(pytorch_profile: Optional[profile] = None, iter_fn: Optinal[Callable] = None):
+    def loop(pytorch_profile: Optional[profile] = None,
+             iter_fn: Optinal[Callable] = None):
       nonlocal t_trace
       total_timing = 0
       for i in range(self._args.iterations_per_run):
@@ -411,7 +415,8 @@ class ExperimentRunner:
 
     return metrics, output
 
-  def _prepare_inputs(self, example_inputs: List[Any], should_randomize_input: bool):
+  def _prepare_inputs(self, example_inputs: List[Any],
+                      should_randomize_input: bool):
     inputs_list = []
     for i in range(self._args.iterations_per_run):
       inputs = copy.deepcopy(example_inputs)
@@ -420,7 +425,9 @@ class ExperimentRunner:
       inputs_list.append(inputs)
     return inputs_list
 
-  def _mark_step(self, benchmark_experiment: BenchmarkExperiment, tensors_to_check=None):
+  def _mark_step(self,
+                 benchmark_experiment: BenchmarkExperiment,
+                 tensors_to_check=None):
     if benchmark_experiment.xla:
       if benchmark_experiment.torch_xla2:
         assert tensors_to_check is not None, "torch_xla2 requires input tensor to block_until_ready"
@@ -535,7 +542,8 @@ class ExperimentRunner:
   # Helpers to dump and analyze the PyTorch profile, PyTorch/XLA metrics, etc. #
   ##############################################################################
 
-  def _dump_pytorch_profile(self, profile: Optional[torch.profiler.profile], experiment_config: OrderedDict,
+  def _dump_pytorch_profile(self, profile: Optional[torch.profiler.profile],
+                            experiment_config: OrderedDict,
                             model_config: OrderedDict, repeat_iteration: int):
     assert profile is not None, "Expect PyTorch profile"
 
@@ -560,7 +568,8 @@ class ExperimentRunner:
     self._save_results_file(
         text, experiment_config, model_config, "pytorch-profile", mode="a")
 
-  def _collect_cuda_cpu_metrics(self, pytorch_profile: Optional[profile], metrics: Dict[str, Any]):
+  def _collect_cuda_cpu_metrics(self, pytorch_profile: Optional[profile],
+                                metrics: Dict[str, Any]):
     assert pytorch_profile is not None, "Expect profile"
 
     kernel_dump = pytorch_profile.profiler.total_average()
@@ -588,8 +597,9 @@ class ExperimentRunner:
     metrics["per_iter_cuda_time_s"] = us_to_s(total_cuda_time /
                                               self._args.iterations_per_run)
 
-  def _collect_cuda_cpu_metrics_individual_ops(self, benchmark_experiment: BenchmarkExperiment,
-                                               metrics, pytorch_profile: Optional[profile]):
+  def _collect_cuda_cpu_metrics_individual_ops(
+      self, benchmark_experiment: BenchmarkExperiment, metrics,
+      pytorch_profile: Optional[profile]):
     assert pytorch_profile is not None, "Expect profile"
     logger.debug("Collect CUDA and CPU metrics for individual ops")
 
@@ -625,8 +635,8 @@ class ExperimentRunner:
           metrics["inductor_ops"] = dict()
         metrics["inductor_ops"][op_name] = extract_prof_info(event)
 
-  def _dump_dynamo_counters(self, experiment_config: OrderedDict, model_config: OrderedDict,
-                            repeat_iteration: int):
+  def _dump_dynamo_counters(self, experiment_config: OrderedDict,
+                            model_config: OrderedDict, repeat_iteration: int):
     text = f"{json.dumps(dynamo_utils.counters)}\n"
     self._save_results_file(
         text,
@@ -635,7 +645,8 @@ class ExperimentRunner:
         "dynamo-counters",
         sub_dirname=str(repeat_iteration))
 
-  def _dump_pytorch_xla_metrics(self, experiment_config: OrderedDict, model_config: OrderedDict,
+  def _dump_pytorch_xla_metrics(self, experiment_config: OrderedDict,
+                                model_config: OrderedDict,
                                 repeat_iteration: int):
     text = met.metrics_report()
     assert isinstance(text, str)

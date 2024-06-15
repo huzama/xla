@@ -188,7 +188,8 @@ class TorchBenchModelLoader(ModelLoader):
   def skip(self):
     return config_data()["skip"]
 
-  def is_compatible(self, dummy_benchmark_model: BenchmarkModel, benchmark_experiment: BenchmarkExperiment):
+  def is_compatible(self, dummy_benchmark_model: BenchmarkModel,
+                    benchmark_experiment: BenchmarkExperiment):
     name = dummy_benchmark_model.model_name
     test = get_torchbench_test_name(benchmark_experiment.test)
 

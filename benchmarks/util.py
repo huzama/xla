@@ -47,7 +47,7 @@ def patch_torch_manual_seed():
   torch.manual_seed = deterministic_torch_manual_seed
 
 
-def reset_rng_state(benchmark_experiment: Optional[BenchmarkExperiment]=None):
+def reset_rng_state(benchmark_experiment: Optional[BenchmarkExperiment] = None):
   torch.manual_seed(1337)
   random.seed(1337)
   np.random.seed(1337)
@@ -78,7 +78,7 @@ def is_xla_device_available(devkind, use_xla2: bool = False):
   return r.returncode == 0
 
 
-def move_to_device(item, device, torch_xla2:bool=False):
+def move_to_device(item, device, torch_xla2: bool = False):
   if torch_xla2:
     import torch_xla2
     import jax

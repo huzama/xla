@@ -33,7 +33,8 @@ class ModelLoader:
 
     return model_configs
 
-  def is_compatible(self, dummy_benchmark_model: BenchmarkModel, benchmark_experiment: BenchmarkExperiment):
+  def is_compatible(self, dummy_benchmark_model: BenchmarkModel,
+                    benchmark_experiment: BenchmarkExperiment):
     return True
 
   def get_benchmark_indices(self, length):
@@ -48,7 +49,10 @@ class ModelLoader:
     return (not re.search("|".join(self._args.filter), model_name, re.I) or
             re.search("|".join(self._args.exclude), model_name, re.I))
 
-  def load_model(self, model_config: Dict[str, Any], benchmark_experiment: BenchmarkExperiment, dummy: bool = False) -> BenchmarkModel:
+  def load_model(self,
+                 model_config: Dict[str, Any],
+                 benchmark_experiment: BenchmarkExperiment,
+                 dummy: bool = False) -> BenchmarkModel:
     suite_name = self.suite_name
     model_name = model_config["model_name"]
     benchmark_model = self.benchmark_model_class(
@@ -67,7 +71,8 @@ class ModelLoader:
 
 class BenchmarkModel:
 
-  def __init__(self, suite_name: str, model_name: str, benchmark_experiment: BenchmarkExperiment):
+  def __init__(self, suite_name: str, model_name: str,
+               benchmark_experiment: BenchmarkExperiment):
     self.suite_name = suite_name
     self.model_name = model_name
     self.benchmark_experiment = benchmark_experiment
@@ -183,7 +188,7 @@ class BenchmarkModel:
   def compute_loss(self, pred):
     raise NotImplementedError
 
-  def train(self, inputs, collect_full_output: bool=False):
+  def train(self, inputs, collect_full_output: bool = False):
     self._optimizer_zero_grad()
     with self.autocast(**self.autocast_kwargs):
       pred = self.module(*inputs)
@@ -196,7 +201,7 @@ class BenchmarkModel:
     # TODO: dynamo inductor would fail if .detach() is used
     return None
 
-  def eval(self, inputs, collect_full_output: bool=False):
+  def eval(self, inputs, collect_full_output: bool = False):
     with self.autocast(**self.autocast_kwargs):
       pred = self.module(*inputs)
     return pred
