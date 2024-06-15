@@ -9,7 +9,6 @@ import subprocess
 import sys
 import time
 import torch
-from torch.profile import profile
 import torch._dynamo.utils as dynamo_utils
 import tiers
 from typing import Optional, Any
