@@ -7,6 +7,9 @@ import torch.nn as nn
 from torch._dynamo.testing import collect_results
 from torch.utils import _pytree as pytree
 from util import cast_to_dtype, move_to_device
+from benchmark_experiment import BenchmarkExperiment
+from benchmark_model import BenchmarkModel
+from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +33,7 @@ class ModelLoader:
 
     return model_configs
 
-  def is_compatible(self, dummy_benchmark_model, benchmark_experiment):
+  def is_compatible(self, dummy_benchmark_model: BenchmarkModel, benchmark_experiment: BenchmarkExperiment):
     return True
 
   def get_benchmark_indices(self, length):
@@ -41,11 +44,11 @@ class ModelLoader:
            length)
     return start, end
 
-  def skip_model(self, model_name):
+  def skip_model(self, model_name: str):
     return (not re.search("|".join(self._args.filter), model_name, re.I) or
             re.search("|".join(self._args.exclude), model_name, re.I))
 
-  def load_model(self, model_config, benchmark_experiment, dummy=False):
+  def load_model(self, model_config: Dict[str, Any], benchmark_experiment: BenchmarkExperiment, dummy: bool = False) -> BenchmarkModel:
     suite_name = self.suite_name
     model_name = model_config["model_name"]
     benchmark_model = self.benchmark_model_class(
@@ -64,7 +67,7 @@ class ModelLoader:
 
 class BenchmarkModel:
 
-  def __init__(self, suite_name, model_name, benchmark_experiment):
+  def __init__(self, suite_name: str, model_name: str, benchmark_experiment: BenchmarkExperiment):
     self.suite_name = suite_name
     self.model_name = model_name
     self.benchmark_experiment = benchmark_experiment
@@ -108,7 +111,7 @@ class BenchmarkModel:
   def conversion_dtype(self):
     return None
 
-  def prepare_for_experiment(self, dynamo_compilation_opts):
+  def prepare_for_experiment(self, dynamo_compilation_opts: Dict[str, str]):
     self.device = self.benchmark_experiment.get_device()
     self.dtype = self.conversion_dtype()
     if self.dtype is not None:
@@ -180,7 +183,7 @@ class BenchmarkModel:
   def compute_loss(self, pred):
     raise NotImplementedError
 
-  def train(self, inputs, collect_full_output=False):
+  def train(self, inputs, collect_full_output: bool=False):
     self._optimizer_zero_grad()
     with self.autocast(**self.autocast_kwargs):
       pred = self.module(*inputs)
@@ -193,7 +196,7 @@ class BenchmarkModel:
     # TODO: dynamo inductor would fail if .detach() is used
     return None
 
-  def eval(self, inputs, collect_full_output=False):
+  def eval(self, inputs, collect_full_output: bool=False):
     with self.autocast(**self.autocast_kwargs):
       pred = self.module(*inputs)
     return pred
@@ -212,5 +215,5 @@ class BenchmarkModel:
   def default_precision_flag(self):
     return None
 
-  def update_process_env(self, process_env):
+  def update_process_env(self, process_env: Dict[str, str]):
     pass

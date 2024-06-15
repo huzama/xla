@@ -11,6 +11,7 @@ import torch.utils._pytree as pytree
 import sys
 import torch_xla.core.xla_model as xm
 from torch_xla._internal import tpu
+from benchmark_experiment import BenchmarkExperiment
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ def patch_torch_manual_seed():
   torch.manual_seed = deterministic_torch_manual_seed
 
 
-def reset_rng_state(benchmark_experiment=None):
+def reset_rng_state(benchmark_experiment: Optional[BenchmarkExperiment]=None):
   torch.manual_seed(1337)
   random.seed(1337)
   np.random.seed(1337)
@@ -77,7 +78,7 @@ def is_xla_device_available(devkind, use_xla2: bool = False):
   return r.returncode == 0
 
 
-def move_to_device(item, device, torch_xla2=False):
+def move_to_device(item, device, torch_xla2:bool=False):
   if torch_xla2:
     import torch_xla2
     import jax
@@ -123,7 +124,7 @@ def randomize_input(inputs):
 
 
 @contextmanager
-def set_cwd(path):
+def set_cwd(path: str):
   original_dir = abspath(os.getcwd())
   os.chdir(path)
   try:
@@ -132,7 +133,7 @@ def set_cwd(path):
     os.chdir(original_dir)
 
 
-def get_accelerator_model(accelerator):
+def get_accelerator_model(accelerator: str):
   if accelerator == "cpu":
     return get_cpu_name()
   elif accelerator == "cuda":
@@ -166,7 +167,7 @@ def get_torchbench_test_name(test):
   return {"train": "training", "eval": "inference"}[test]
 
 
-def find_near_file(names):
+def find_near_file(names: str):
   """Find a file near the current directory.
 
   Looks for `names` in the current directory, up to its two direct parents.
